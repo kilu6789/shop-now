@@ -15,8 +15,8 @@ test("mobile shopping flow persists, avoids duplicates and supports undo", async
   await page
     .getByRole("button", { name: "Dodaj: Mlijeko", exact: true })
     .click();
-  await page.getByRole("button", { name: "Već dodano: Mlijeko" }).click();
-  await page.getByRole("button", { name: "Gotovo", exact: false }).click();
+  await page.getByRole("button", { name: "Povećaj količinu: Mlijeko" }).click();
+  await page.getByRole("button", { name: "Natrag na našu listu" }).click();
   await expect(
     page.getByRole("button", { name: "Označi kupljeno: Mlijeko" }),
   ).toHaveCount(1);
@@ -26,6 +26,13 @@ test("mobile shopping flow persists, avoids duplicates and supports undo", async
   ).toBeVisible();
   await page.reload();
   await page.getByRole("button", { name: "Vrati na listu: Mlijeko" }).click();
+  await expect(
+    page.getByRole("status", { name: "Broj komada: Mlijeko" }),
+  ).toHaveText("2");
+  await page.getByRole("button", { name: "Smanji količinu: Mlijeko" }).click();
+  await expect(
+    page.getByRole("status", { name: "Broj komada: Mlijeko" }),
+  ).toHaveText("1");
   await page.getByRole("button", { name: "Označi kupljeno: Mlijeko" }).click();
   await page.getByRole("button", { name: "Očisti", exact: true }).click();
   await expect(
@@ -63,7 +70,7 @@ test("custom products are searchable, editable, persistent and removable", async
   await page.getByRole("button", { name: "Spremi i dodaj" }).click();
   await page.getByRole("searchbox").fill("PROTEINSKO");
   await expect(
-    page.getByRole("button", { name: "Već dodano: Proteinsko pecivo" }),
+    page.getByRole("status", { name: "Broj komada: Proteinsko pecivo" }),
   ).toBeVisible();
   await page.getByRole("button", { name: "Uredi Proteinsko pecivo" }).click();
   await page
@@ -112,4 +119,42 @@ test("failed local storage does not falsely add a product", async ({
   await expect(
     page.getByRole("button", { name: "Dodaj: Mlijeko", exact: true }),
   ).toBeVisible();
+});
+
+test("home copy, browser back and legacy saved list", async ({ page }) => {
+  await page.addInitScript(() => {
+    if (!localStorage.getItem("nasa-lista-v1"))
+      localStorage.setItem(
+        "nasa-lista-v1",
+        JSON.stringify({
+          version: 1,
+          items: { "dairy-0": false },
+          usage: { "dairy-0": 1 },
+          custom: [],
+        }),
+      );
+  });
+  await page.goto("/");
+  await expect(
+    page.getByText("Shopping lista za Klaru i Lukasa"),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Otvori katalog", exact: false }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("status", { name: "Broj komada: Mlijeko" }),
+  ).toHaveText("1");
+  await page
+    .getByRole("button", { name: "Dodaj namirnice", exact: false })
+    .click();
+  await page.goBack();
+  await expect(
+    page.getByRole("heading", { name: "Naša lista." }),
+  ).toBeVisible();
+  await page.setViewportSize({ width: 320, height: 740 });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
 });

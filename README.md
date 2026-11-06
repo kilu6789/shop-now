@@ -5,7 +5,7 @@ Mobilna shopping lista u žuto-crnom cartoon stilu. React, TypeScript i Vite.
 ## Trenutna faza
 
 Prva testabilna cjelina: lista grupirana po kategorijama, katalog, često kupovano,
-pretraživanje bez dijakritika, vlastiti proizvodi, označavanje kupljenog i poništavanje
+pretraživanje bez dijakritika, vlastiti proizvodi, količine s kontrolama −/+, označavanje kupljenog i poništavanje
 čišćenja. Podaci se spremaju u localStorage **samo u ovom pregledniku**.
 Nema autentifikacije ni sinkronizacije između uređaja. To nije završena verzija 1.0.
 
@@ -67,3 +67,14 @@ Ovo je javno dostupan prikaz aplikacije. Lista se zasad sprema samo u preglednik
 svakog posjetitelja; aplikacija je ne šalje hostingu niti dijeli s drugim uređajem.
 Ovo još nije instalabilna PWA verzija. Objava okruženja u Codexu ne objavljuje web.
 Nakon promjene koda potrebno je ponovno izgraditi i prenijeti `dist`.
+
+## Promjene nakon prve probe
+
+- Količine su dostupne u katalogu i na glavnoj listi: + povećava, − smanjuje;
+  smanjivanje s 1 uklanja namirnicu. Broj komada se sprema nakon zatvaranja.
+- Dodir kupljene namirnice vraća je na listu. Kupljeno je odmah vidljivo čak i
+  kada nema aktivnih namirnica, uz kratku uputu za vraćanje.
+- Prikaz dodavanja ima strelicu „Naša lista”; radi i povratak preglednika.
+- Novo zaglavlje: Shopping lista za Klaru i Lukasa. Uklonjen „Otvori katalog”.
+- Stare lokalno spremljene liste automatski dobivaju količinu 1. Za zadržavanje
+  podataka na Netlifyju prenijeti novu verziju na **isti site**, ne stvarati novi.

@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   normalize,
   addProduct,
+  changeQuantity,
   removeProduct,
   clearPurchased,
   validState,
@@ -16,6 +17,7 @@ test("repeated adding does not duplicate or inflate frequency", () => {
   let s = addProduct(empty(), "milk");
   s = addProduct(s, "milk");
   assert.deepEqual(s.items, { milk: false });
+  assert.equal(s.quantities.milk, 2);
   assert.equal(s.usage.milk, 1);
 });
 test("restoring purchased item does not count a new shopping round", () => {
@@ -51,4 +53,16 @@ test("storage validation rejects corrupt data", () => {
   assert.equal(validState({ ...empty(), items: { milk: "false" } }), false);
   assert.equal(validState({ ...empty(), usage: null }), false);
   assert.equal(validState({ version: 9 }), false);
+});
+
+test("decreasing to zero removes product and quantities", () => {
+  const s = changeQuantity(addProduct(empty(), "milk"), "milk", -1);
+  assert.equal("milk" in s.items, false);
+  assert.equal("milk" in s.quantities, false);
+});
+test("old lists remain valid and start at one piece", () => {
+  const old = { ...empty(), items: { milk: false } };
+  assert.ok(validState(old));
+  assert.equal(changeQuantity(old, "milk", 1).quantities.milk, 2);
+  assert.equal(validState({ ...old, quantities: { milk: 0 } }), false);
 });

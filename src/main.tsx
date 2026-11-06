@@ -4,6 +4,7 @@ import { categories, catalog, popular, type Product } from "./catalog";
 import {
   normalize,
   addProduct,
+  changeQuantity,
   removeProduct,
   clearPurchased,
   validState,
@@ -12,11 +13,18 @@ import "./style.css";
 type State = {
   version: 1;
   items: Record<string, boolean>;
+  quantities: Record<string, number>;
   usage: Record<string, number>;
   custom: Product[];
 };
 const key = "nasa-lista-v1";
-const empty: State = { version: 1, items: {}, usage: {}, custom: [] };
+const empty: State = {
+  version: 1,
+  items: {},
+  quantities: {},
+  usage: {},
+  custom: [],
+};
 let loadError = false;
 function load(): State {
   try {
@@ -24,7 +32,7 @@ function load(): State {
     if (!raw) return empty;
     const s = JSON.parse(raw);
     if (!validState(s)) throw Error();
-    return s;
+    return { ...s, quantities: s.quantities || {} };
   } catch {
     loadError = true;
     return empty;
@@ -102,7 +110,9 @@ function Mascot() {
 }
 function App() {
   const [state, setState] = useState<State>(load),
-    [screen, setScreen] = useState<"list" | "add">("list"),
+    [screen, setScreen] = useState<"list" | "add">(
+      location.hash === "#add" ? "add" : "list",
+    ),
     [query, setQuery] = useState(""),
     [category, setCategory] = useState("all"),
     [online, setOnline] = useState(navigator.onLine),
@@ -137,6 +147,22 @@ function App() {
       dialog.current?.querySelector("input")?.focus();
     } else dialog.current?.close();
   }, [editor]);
+  useEffect(() => {
+    const back = () => {
+      setScreen(location.hash === "#add" ? "add" : "list");
+      setQuery("");
+      setCategory("all");
+    };
+    window.addEventListener("hashchange", back);
+    return () => window.removeEventListener("hashchange", back);
+  }, []);
+  function navigateScreen(next: "list" | "add") {
+    location.hash = next === "add" ? "add" : "";
+    setScreen(next);
+    setQuery("");
+    setCategory("all");
+    window.scrollTo(0, 0);
+  }
   function commit(next: State) {
     try {
       localStorage.setItem(key, JSON.stringify(next));
@@ -172,7 +198,7 @@ function App() {
   function add(p: Product) {
     if (commit(addProduct(state, p.id)))
       setNotice(
-        `${p.name} ${state.items[p.id] === false ? "je već na listi" : "dodano"}`,
+        `${p.name} · ${addProduct(state, p.id).quantities[p.id]} na listi`,
       );
   }
   function openEditor(p?: Product) {
@@ -213,20 +239,51 @@ function App() {
       setFormError("Spremanje nije uspjelo. Pokušaj ponovno.");
     }
   }
+  function quantityControl(p: Product) {
+    return (
+      <div className="quantity-control" aria-label={`Količina: ${p.name}`}>
+        <button
+          aria-label={`Smanji količinu: ${p.name}`}
+          onClick={() => commit(changeQuantity(state, p.id, -1))}
+        >
+          −
+        </button>
+        <output aria-label={`Broj komada: ${p.name}`}>
+          {state.quantities[p.id] || 1}
+        </output>
+        <button
+          aria-label={`Povećaj količinu: ${p.name}`}
+          onClick={() => add(p)}
+        >
+          +
+        </button>
+      </div>
+    );
+  }
   function productButton(p: Product) {
     const selected = state.items[p.id] === false;
     return (
-      <div className="catalog-row" key={p.id}>
-        <button
-          className={"product-option " + (selected ? "selected" : "")}
-          onClick={() => add(p)}
-          aria-label={`${selected ? "Već dodano: " : "Dodaj: "}${p.name}`}
-        >
-          <span>{p.name}</span>
-          <span className="mini-check" aria-hidden="true">
-            {selected ? "✓" : "+"}
-          </span>
-        </button>
+      <div
+        className={"catalog-row " + (selected ? "selected-row" : "")}
+        key={p.id}
+      >
+        {selected ? (
+          <>
+            <span className="selected-name">{p.name}</span>
+            {quantityControl(p)}
+          </>
+        ) : (
+          <button
+            className="product-option"
+            onClick={() => add(p)}
+            aria-label={`Dodaj: ${p.name}`}
+          >
+            <span>{p.name}</span>
+            <span className="mini-check" aria-hidden="true">
+              +
+            </span>
+          </button>
+        )}
         {p.custom && (
           <button
             className="edit"
@@ -252,8 +309,22 @@ function App() {
           <span className="check" aria-hidden="true">
             {purchased ? "✓" : ""}
           </span>
-          <span>{p.name}</span>
+          <span>
+            {p.name}
+            {purchased && (
+              <small className="purchased-hint">
+                Dodirni za povratak na listu
+              </small>
+            )}
+          </span>
         </button>
+        {purchased ? (
+          <span className="bought-quantity">
+            {state.quantities[p.id] || 1}×
+          </span>
+        ) : (
+          quantityControl(p)
+        )}
         <button
           className="remove"
           aria-label={`Ukloni ${p.name} s liste`}
@@ -267,7 +338,20 @@ function App() {
   return (
     <main className="app">
       <header className={screen === "list" ? "hero" : "hero compact"}>
-        <div className="eyebrow">MALA LISTA. DOBRA EKIPA.</div>
+        {screen === "add" && (
+          <button
+            className="back-button"
+            onClick={() => {
+              navigateScreen("list");
+              setQuery("");
+              setCategory("all");
+            }}
+            aria-label="Natrag na našu listu"
+          >
+            ← Naša lista
+          </button>
+        )}
+        <div className="eyebrow">Shopping lista za Klaru i Lukasa</div>
         <h1 ref={heading} tabIndex={-1}>
           {screen === "list" ? "Naša lista" : "Dodaj namirnice"}
           <span className="title-dot">.</span>
@@ -322,7 +406,7 @@ function App() {
               />
             </svg>
           </div>
-          {!active.length && (
+          {!active.length && !bought.length && (
             <div className="empty">
               <img src="/icon.svg" alt="" />
               <h3>{bought.length ? "Sve je kupljeno!" : "Što nam treba?"}</h3>
@@ -331,9 +415,6 @@ function App() {
                   ? "Vrijeme je za nešto fino."
                   : "Dodaj prve namirnice i pripremi se za kupovinu."}
               </p>
-              <button className="text-button" onClick={() => setScreen("add")}>
-                Otvori katalog →
-              </button>
             </div>
           )}
           {categories.map((c) => {
@@ -363,6 +444,9 @@ function App() {
                   Očisti
                 </button>
               </div>
+              <p className="bought-instruction">
+                Dodirni namirnicu da je vratiš na listu.
+              </p>
               {bought.map((p) => listRow(p, true))}
             </section>
           )}
@@ -374,6 +458,7 @@ function App() {
                   const restored = {
                     ...state,
                     items: { ...undo.items, ...state.items },
+                    quantities: { ...undo.quantities, ...state.quantities },
                   };
                   if (commit(restored)) setUndo(null);
                 }}
@@ -452,7 +537,7 @@ function App() {
         <button
           className="primary"
           onClick={() => {
-            setScreen(screen === "list" ? "add" : "list");
+            navigateScreen(screen === "list" ? "add" : "list");
             setQuery("");
             setCategory("all");
           }}

@@ -637,3 +637,130 @@ dialog small {
   font-size: 12px;
   line-height: 1.5;
 }
+.quantity-control {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  border: 1.5px solid #25251d;
+  border-radius: 25px;
+  background: #ffdb24;
+  overflow: hidden;
+}
+.quantity-control button {
+  border: 0;
+  background: none;
+  min-width: 44px;
+  min-height: 44px;
+  font-size: 23px;
+  font-weight: 800;
+  padding: 4px;
+}
+.quantity-control output {
+  min-width: 19px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 900;
+}
+.selected-name {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-weight: 800;
+  font-size: 15px;
+  padding: 10px 4px;
+}
+.selected-row {
+  gap: 6px;
+  min-height: 62px;
+}
+.frequent-grid {
+  grid-template-columns: 1fr;
+}
+.frequent-grid .catalog-row {
+  padding: 0 10px;
+}
+.frequent-grid .product-option {
+  font-size: 15px;
+}
+.item-toggle {
+  font-size: 18px;
+  gap: 10px;
+}
+.item-toggle > span:last-child {
+  min-width: 0;
+}
+.list-row {
+  flex-wrap: wrap;
+}
+.list-row > .remove {
+  width: 32px;
+  flex-basis: 32px;
+}
+.list-row > .item-toggle {
+  flex-basis: 100px;
+}
+.purchased-hint {
+  display: block;
+  font-size: 10px;
+  font-weight: 500;
+  text-decoration: none;
+  margin-top: 4px;
+}
+.purchased .item-toggle > span:last-child {
+  text-decoration: none;
+}
+.purchased .check {
+  background: #fffaf0;
+  color: #25251d;
+  border: 2px solid #25251d;
+}
+.bought-instruction {
+  font-size: 11px;
+  color: #777466;
+  margin: 0 0 10px;
+}
+.bought-quantity {
+  font-size: 13px;
+  color: #777466;
+}
+.back-button {
+  border: 0;
+  background: none;
+  min-height: 44px;
+  padding: 0;
+  font-weight: 800;
+  margin-bottom: 10px;
+}
+.eyebrow {
+  max-width: 100%;
+  line-height: 1.6;
+  letter-spacing: 1px;
+}
+.compact {
+  padding-top: 12px;
+}
+.bought {
+  margin-top: 18px;
+}
+@media (max-width: 360px) {
+  .quantity-control button {
+    min-width: 40px;
+    min-height: 44px;
+  }
+  .list-row > .remove {
+    flex-basis: 28px;
+    width: 28px;
+  }
+  .content {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+  .item-toggle {
+    font-size: 16px;
+    gap: 7px;
+  }
+  .check {
+    width: 26px;
+    height: 26px;
+  }
+}
